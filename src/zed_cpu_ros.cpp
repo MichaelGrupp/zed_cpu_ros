@@ -35,6 +35,10 @@
 #include <dynamic_reconfigure/server.h>
 #include <zed_cpu_ros/zed_cpu_ros_DynConfig.h>  // automatically generated in devel from cfg/...
 
+// frame filter
+#include "tearing_filter.hpp"
+
+
 
 /**
  * @brief identifiers for supported ZED stereo camera resolutions
@@ -157,10 +161,11 @@ class ZedCameraROS {
 private:
     ZedCamera zed;
     ZedResoID resoID_;
+    TearingFilter filter;
     std::mutex frame_mutex;
     int device_;
     double frame_rate_;
-    bool show_image_, flip_;
+    bool show_image_, flip_, filter_tearing_;
     unsigned int width_, height_;
     std::string left_frame_id_, right_frame_id_;
     std::string zed_config_file;
@@ -184,6 +189,7 @@ public:
         private_nh.param("right_frame_id", right_frame_id_, std::string("right_camera"));
         private_nh.param("show_image", show_image_, false);
         private_nh.param("dyn_cfg", allow_dynamic_reconfig, false);
+        private_nh.param("filter_tearing", filter_tearing_, false);
 
         ROS_INFO("Trying to initialize the camera");
         try {
@@ -264,6 +270,14 @@ public:
                 } else {
                     ROS_INFO_ONCE("Successfully grabbed an image from the camera");
                     ROS_INFO_ONCE("Publishing frames at %.2f Hz", frame_rate_);
+                    if (filter_tearing_) {
+                        if (filter.detectTearing(left_image)) {
+                            ROS_WARN("ignoring corrupted frame");
+                            continue;
+                        }
+                        else
+                            ROS_INFO_ONCE("frame was not corrupted");
+                    }
                     if (show_image_) {
                         cv::imshow("left", left_image);
                         cv::imshow("right", right_image);
@@ -315,13 +329,18 @@ public:
     void dynamic_reconfigure_callback(zed_cpu_ros::zed_cpu_ros_DynConfig &config, uint32_t level) {
         ROS_INFO("Received a dynamic_reconfigure request");
         zed.setResolution(static_cast<ZedResoID>(config.resolution_ID));
-        //zed.setProperty(CV_CAP_PROP_AUTO_EXPOSURE, config.auto_exposure);
-        //zed.setProperty(CV_CAP_PROP_EXPOSURE, config.exposure);
-        zed.setProperty(CV_CAP_PROP_GAIN, config.defaults ? 0.5 : config.gain);
-        zed.setProperty(CV_CAP_PROP_BRIGHTNESS, config.defaults ? 0.375 : config.brightness);
-        zed.setProperty(CV_CAP_PROP_CONTRAST, config.defaults ? 0.125 : config.contrast);
-        zed.setProperty(CV_CAP_PROP_HUE, config.defaults ? 0 : config.hue);
-        zed.setProperty(CV_CAP_PROP_SATURATION, config.defaults ? 0.5 : config.saturation);
+        if (! config.ignore_values) {
+            //zed.setProperty(CV_CAP_PROP_AUTO_EXPOSURE, config.auto_exposure);
+            //zed.setProperty(CV_CAP_PROP_EXPOSURE, config.exposure);
+            zed.setProperty(CV_CAP_PROP_GAIN, config.defaults ? 0.5 : config.gain);
+            zed.setProperty(CV_CAP_PROP_BRIGHTNESS, config.defaults ? 0.375 : config.brightness);
+            zed.setProperty(CV_CAP_PROP_CONTRAST, config.defaults ? 0.125 : config.contrast);
+            zed.setProperty(CV_CAP_PROP_HUE, config.defaults ? 0 : config.hue);
+            zed.setProperty(CV_CAP_PROP_SATURATION, config.defaults ? 0.5 : config.saturation);
+        }
+        filter_tearing_ = config.filter_tearing;
+        filter.setAtol(config.filter_atol);
+        filter.setHoughThreshold(config.filter_hough_thr);
     }
 
     /**

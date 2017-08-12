@@ -8,6 +8,7 @@
 <arg name="flip" default="true"/>
 <arg name="show_image" default="true"/>
 <arg name="dyn_cfg" default="false"/>
+<arg name="filter_tearing" default="false"/>
 
 <node pkg="zed_cpu_ros" type="zed_cpu_ros" name="zed_stereo_node" output="screen" ns="$(arg camera_namespace)" required="true">
 	<param name="device" value="$(arg device)"/>	
@@ -15,6 +16,8 @@
 	<param name="frame_rate" value="$(arg frame_rate)"/>
 	<param name="flip" value="$(arg flip)"/>
 	<param name="dyn_cfg" value="$(arg dyn_cfg)"/>
+	<param name="filter_tearing" value="$(arg filter_tearing)"/>
+
 	<param name="zed_config_file" value="$(arg config_file_location)"/>
 	<param name="config_is_kalibr_yaml" value="$(arg config_is_kalibr_yaml)"/>
 	<param name="show_image" value="$(arg show_image)"/>

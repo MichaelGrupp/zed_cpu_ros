@@ -43,10 +43,10 @@ generate_dynamic_reconfigure_options(
 )
 
 catkin_package(
-    # INCLUDE_DIRS include
+    INCLUDE_DIRS include
     LIBRARIES 
     CATKIN_DEPENDS
 )
 
-add_executable(zed_cpu_ros src/zed_cpu_ros.cpp)
+add_executable(zed_cpu_ros src/zed_cpu_ros.cpp include/tearing_filter.hpp)
 target_link_libraries(zed_cpu_ros ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV_LIBS} yaml-cpp)
