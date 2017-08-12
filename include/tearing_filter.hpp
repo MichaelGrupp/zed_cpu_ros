@@ -14,7 +14,7 @@ private:
     float atol_;
 
 public:
-    TearingFilter(int hough_threshold=300, float atol=0.01) :
+    TearingFilter(int hough_threshold=300, float atol=0.05) :
             hough_threshold_(hough_threshold),
             atol_(atol)
     { }

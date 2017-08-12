@@ -273,6 +273,7 @@ public:
                     if (filter_tearing_) {
                         if (filter.detectTearing(left_image)) {
                             ROS_WARN("ignoring corrupted frame");
+                            r.sleep();
                             continue;
                         }
                         else
