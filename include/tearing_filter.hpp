@@ -2,7 +2,7 @@
 #define ZED_CPU_ROS_TEARING_FILTER_HPP
 
 #include <vector>
-#include <math.h>
+#include <cmath>
 
 // OpenCV
 #include <opencv2/opencv.hpp>
@@ -14,7 +14,7 @@ private:
     float atol_;
 
 public:
-    TearingFilter(int hough_threshold=300, float atol=0.05) :
+    explicit TearingFilter(int hough_threshold=300, float atol=0.05) :
             hough_threshold_(hough_threshold),
             atol_(atol)
     { }
@@ -43,6 +43,8 @@ public:
             pt1.y = cvRound(y0 + 1000*(a));
             pt2.x = cvRound(x0 - 1000*(-b));
             pt2.y = cvRound(y0 - 1000*(a));
+
+            // check if it's a horizontal line (within absolute tolerance)
             if (90.0-atol_ <= theta*180/CV_PI <= 90.0+atol_ && pt1.y+pt2.y > 0) {
                 found = true;
             }
